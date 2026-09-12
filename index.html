@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Bit Bros: Aventura no Mundo Digital (BNCC)</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-wrapper">
+        <!-- Top Arcade Header & HUD -->
+        <header id="arcade-header">
+            <div class="hud-item score-container">
+                <span class="hud-label">PONTOS</span>
+                <span id="hud-score" class="hud-val">000000</span>
+            </div>
+            <div class="hud-item coins-container">
+                <span class="coin-icon">🪙</span>
+                <span id="hud-coins" class="hud-val">x00</span>
+            </div>
+            <div class="hud-item world-container">
+                <span class="hud-label">MUNDO</span>
+                <span id="hud-world" class="hud-val">1-1</span>
+            </div>
+            <div class="hud-item lives-container">
+                <span class="hud-label">VIDAS</span>
+                <span id="hud-lives" class="hud-val">❤️ x3</span>
+            </div>
+            <div class="hud-controls">
+                <button id="btn-sound" class="arcade-btn-mini" title="Ativar/Desativar Som">🔊 SOM</button>
+                <button id="btn-help" class="arcade-btn-mini" title="Instruções e BNCC">❓ AJUDA</button>
+                <button id="btn-restart" class="arcade-btn-mini" title="Reiniciar Fase">🔄 REINICIAR</button>
+            </div>
+        </header>
+
+        <!-- Main Game Canvas Container -->
+        <div id="canvas-container">
+            <canvas id="gameCanvas" width="960" height="540"></canvas>
+            
+            <!-- In-game Notification Banner -->
+            <div id="game-toast" class="toast hidden"></div>
+        </div>
+
+        <!-- Virtual Controls for Trackpad & Mouse -->
+        <footer id="touch-controls">
+            <div class="dpad-container">
+                <button id="vbtn-left" class="vbtn dpad-btn" title="Mover para Esquerda">◀</button>
+                <button id="vbtn-right" class="vbtn dpad-btn" title="Mover para Direita">▶</button>
+            </div>
+            <div class="hints-container">
+                <span class="keyboard-tip">⌨️ Use [←][→] ou [A][D] para andar | [ESPAÇO] ou [W] para pular | [E] interagir</span>
+            </div>
+            <div class="actions-container">
+                <button id="vbtn-action" class="vbtn action-btn secondary" title="Interagir com Objetos">⚡ INTERAGIR</button>
+                <button id="vbtn-jump" class="vbtn action-btn primary" title="Pular">🦘 PULAR</button>
+            </div>
+        </footer>
+
+        <!-- Modal Pedagógico BNCC (Diálogos, Quizzes e Desafios) -->
+        <div id="pedagogical-modal" class="modal-overlay hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div class="modal-badge" id="modal-skill-badge">BNCC EF05CO05</div>
+                    <h2 id="modal-title">Desafio dos Componentes</h2>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-illustration" class="modal-icon">💻</div>
+                    <p id="modal-concept-text" class="concept-explanation">
+                        Explicação conceitual clara sobre computação.
+                    </p>
+                    <div id="modal-challenge-area" class="challenge-options">
+                        <!-- Botões de opções inseridos dinamicamente -->
+                    </div>
+                    <div id="modal-feedback" class="feedback-msg hidden"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-confirm-btn" class="modal-action-btn hidden">CONTINUAR ➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Ajuda e BNCC -->
+        <div id="help-modal" class="modal-overlay hidden">
+            <div class="modal-card large">
+                <div class="modal-header">
+                    <div class="modal-badge">GUIA PEDAGÓGICO</div>
+                    <h2>Super Bit Bros - Manual do Aluno & Professor</h2>
+                </div>
+                <div class="modal-body scrollable">
+                    <div class="help-section">
+                        <h3>🎮 Como Jogar (Teclado e Trackpad)</h3>
+                        <p><strong>Teclado:</strong> Setas [←][→] ou [A][D] para correr; [Barra de Espaço], [W] ou [↑] para pular; [E] ou [Enter] para interagir.</p>
+                        <p><strong>Trackpad/Mouse:</strong> Clique ou toque nos botões virtuais na parte inferior da tela (◀, ▶, PULAR, INTERAGIR) e responda aos quizzes clicando nas opções.</p>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>📚 Habilidades BNCC Computação (5º Ano)</h3>
+                        <ul>
+                            <li><strong>Fase 1 (EF05CO05):</strong> Identificar Entrada (Teclado, Mouse), Saída (Monitor, Som), Processamento (CPU) e Armazenamento (RAM, HD/SSD).</li>
+                            <li><strong>Fase 2 (EF05CO06):</strong> Compreender as diferenças práticas entre Armazenamento Local (Offline, no aparelho) e Armazenamento Remoto (Nuvem, via internet).</li>
+                            <li><strong>Fase 3 (EF05CO07):</strong> Reconhecer a missão essencial do Sistema Operacional como o maestro que conecta programas e peças de hardware.</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>⭐ Dicas do Mestre Bit</h3>
+                        <p>Pule por baixo dos blocos com ponto de interrogação <strong>[?]</strong> para revelar itens e cartas de componentes. Pule na cabeça dos <strong>Bugs/Glitches</strong> para eliminá-los!</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-close-help" class="modal-action-btn">VOLTAR AO JOGO</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela de Fim de Fase / Vitória Final -->
+        <div id="victory-modal" class="modal-overlay hidden">
+            <div class="modal-card victory">
+                <div class="modal-header">
+                    <div class="modal-badge">MISSÃO CUMPRIDA! 🏆</div>
+                    <h2 id="victory-title">Fase Concluída!</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="trophy-anim">⭐ 🏅 ⭐</div>
+                    <p id="victory-message">Você dominou os conceitos do Mundo Digital!</p>
+                    <div class="stats-summary" id="victory-stats">
+                        <!-- Pontuação e resumo de aprendizado -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-next-level" class="modal-action-btn">PRÓXIMO MUNDO ➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do Jogo -->
+    <script src="js/audio.js"></script>
+    <script src="js/sprites.js"></script>
+    <script src="js/pedagogical.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
