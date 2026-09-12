@@ -1,0 +1,2866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Bit Bros: Aventura no Mundo Digital (BNCC)</title>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;600;700&display=swap');
+
+:root {
+    --bg-dark: #0f1423;
+    --arcade-blue: #0078d4;
+    --arcade-gold: #fbc02d;
+    --arcade-red: #e53935;
+    --arcade-green: #43a047;
+    --arcade-purple: #8e24aa;
+    --text-light: #ffffff;
+    --pixel-font: 'Press Start 2P', monospace, sans-serif;
+    --ui-font: 'Fredoka', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: var(--ui-font);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+#game-wrapper {
+    position: relative;
+    width: 960px;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 720px;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    border: 4px solid #283593;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(40, 53, 147, 0.4);
+    overflow: hidden;
+}
+
+/* Header & HUD */
+#arcade-header {
+    height: 52px;
+    background: linear-gradient(180deg, #1a237e 0%, #0d1b2a 100%);
+    border-bottom: 3px solid #3949ab;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-family: var(--pixel-font);
+    font-size: 11px;
+    z-index: 10;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.hud-label {
+    color: #ffd54f;
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+.hud-val {
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 2px 2px #000;
+}
+
+.coins-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.coin-icon {
+    font-size: 14px;
+    animation: coinPulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes coinPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.2); }
+}
+
+.hud-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.arcade-btn-mini {
+    background: #283593;
+    color: #ffffff;
+    border: 2px solid #5c6bc0;
+    border-radius: 4px;
+    font-family: var(--pixel-font);
+    font-size: 9px;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 3px 0 #1a237e;
+}
+
+.arcade-btn-mini:hover {
+    background: #3949ab;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 #1a237e;
+}
+
+.arcade-btn-mini:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #1a237e;
+}
+
+/* Canvas Container */
+#canvas-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #5c94fc; /* Mario Sky Blue fallback */
+    overflow: hidden;
+}
+
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Toast Messages */
+.toast {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid var(--arcade-gold);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.toast.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+}
+
+/* Trackpad & Touch Controls */
+#touch-controls {
+    height: 72px;
+    background: #0a0e17;
+    border-top: 3px solid #1a237e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 10;
+}
+
+.dpad-container, .actions-container {
+    display: flex;
+    gap: 12px;
+}
+
+.vbtn {
+    border-radius: 8px;
+    border: none;
+    font-family: var(--ui-font);
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+    transition: transform 0.08s ease, background-color 0.1s;
+}
+
+.vbtn:active, .vbtn.active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.dpad-btn {
+    width: 54px;
+    height: 50px;
+    background: #263238;
+    color: #eceff1;
+    font-size: 20px;
+    border: 2px solid #455a64;
+}
+
+.dpad-btn:hover {
+    background: #37474f;
+}
+
+.action-btn {
+    height: 50px;
+    padding: 0 18px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.action-btn.primary {
+    background: #e53935;
+    border: 2px solid #ef5350;
+}
+.action-btn.primary:hover {
+    background: #f44336;
+}
+
+.action-btn.secondary {
+    background: #fbc02d;
+    color: #212121;
+    border: 2px solid #ffeb3b;
+}
+.action-btn.secondary:hover {
+    background: #fdd835;
+}
+
+.hints-container {
+    display: flex;
+    align-items: center;
+}
+
+.keyboard-tip {
+    font-size: 11px;
+    color: #90caf9;
+    text-align: center;
+}
+
+/* Modals */
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    transition: opacity 0.25s ease;
+    padding: 20px;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+    display: none;
+}
+
+.modal-card {
+    background: #1e293b;
+    border: 4px solid var(--arcade-blue);
+    border-radius: 16px;
+    width: 580px;
+    max-width: 95%;
+    max-height: 90%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 120, 212, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-card.large {
+    width: 680px;
+}
+
+.modal-card.victory {
+    border-color: var(--arcade-gold);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.9), 0 0 30px rgba(251, 192, 45, 0.6);
+}
+
+.modal-header {
+    background: #0f172a;
+    padding: 16px 20px;
+    border-bottom: 2px solid #334155;
+    position: relative;
+}
+
+.modal-badge {
+    display: inline-block;
+    background: var(--arcade-purple);
+    color: white;
+    font-family: var(--pixel-font);
+    font-size: 9px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    color: #f8fafc;
+}
+
+.modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+.modal-body.scrollable {
+    text-align: left;
+    max-height: 380px;
+}
+
+.modal-icon {
+    font-size: 48px;
+    animation: bounce 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes bounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-8px); }
+}
+
+.concept-explanation {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #cbd5e1;
+    background: #0f172a;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border-left: 4px solid var(--arcade-gold);
+    width: 100%;
+}
+
+.challenge-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-top: 6px;
+}
+
+.opt-btn {
+    background: #334155;
+    color: #f1f5f9;
+    border: 2px solid #475569;
+    border-radius: 10px;
+    padding: 14px 12px;
+    font-family: var(--ui-font);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.opt-btn:hover {
+    background: #475569;
+    border-color: #60a5fa;
+    transform: translateY(-2px);
+}
+
+.opt-btn.correct {
+    background: #1b5e20 !important;
+    border-color: #4caf50 !important;
+    color: #e8f5e9 !important;
+}
+
+.opt-btn.wrong {
+    background: #b71c1c !important;
+    border-color: #f44336 !important;
+    color: #ffebee !important;
+}
+
+.feedback-msg {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.feedback-msg.success {
+    background: rgba(76, 175, 80, 0.2);
+    border: 2px solid #4caf50;
+    color: #a5d6a7;
+}
+
+.feedback-msg.error {
+    background: rgba(244, 67, 54, 0.2);
+    border: 2px solid #f44336;
+    color: #ef9a9a;
+}
+
+.modal-footer {
+    background: #0f172a;
+    padding: 14px 20px;
+    border-top: 2px solid #334155;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-action-btn {
+    background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    font-family: var(--pixel-font);
+    font-size: 12px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #15803d;
+    transition: all 0.1s ease;
+}
+
+.modal-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 #15803d;
+}
+
+.modal-action-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #15803d;
+}
+
+/* Help & Victory Modals */
+.help-section {
+    margin-bottom: 16px;
+}
+
+.help-section h3 {
+    font-size: 16px;
+    color: #38bdf8;
+    margin-bottom: 6px;
+}
+
+.help-section p, .help-section li {
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.help-section ul {
+    padding-left: 20px;
+}
+
+.trophy-anim {
+    font-size: 40px;
+    letter-spacing: 12px;
+}
+
+.stats-summary {
+    background: #0f172a;
+    padding: 16px;
+    border-radius: 10px;
+    width: 100%;
+    font-size: 15px;
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+/* Media Queries for responsive and mobile/trackpad screens */
+@media (max-width: 768px) {
+    #arcade-header {
+        font-size: 9px;
+        padding: 0 8px;
+    }
+    .keyboard-tip {
+        display: none;
+    }
+    .challenge-options {
+        grid-template-columns: 1fr;
+    }
+    .action-btn {
+        padding: 0 12px;
+        font-size: 12px;
+    }
+}
+
+</style>
+</head>
+<body>
+    <div id="game-wrapper">
+        <!-- Top Arcade Header & HUD -->
+        <header id="arcade-header">
+            <div class="hud-item score-container">
+                <span class="hud-label">PONTOS</span>
+                <span id="hud-score" class="hud-val">000000</span>
+            </div>
+            <div class="hud-item coins-container">
+                <span class="coin-icon">🪙</span>
+                <span id="hud-coins" class="hud-val">x00</span>
+            </div>
+            <div class="hud-item world-container">
+                <span class="hud-label">MUNDO</span>
+                <span id="hud-world" class="hud-val">1-1</span>
+            </div>
+            <div class="hud-item lives-container">
+                <span class="hud-label">VIDAS</span>
+                <span id="hud-lives" class="hud-val">❤️ x3</span>
+            </div>
+            <div class="hud-controls">
+                <button id="btn-sound" class="arcade-btn-mini" title="Ativar/Desativar Som">🔊 SOM</button>
+                <button id="btn-help" class="arcade-btn-mini" title="Instruções e BNCC">❓ AJUDA</button>
+                <button id="btn-restart" class="arcade-btn-mini" title="Reiniciar Fase">🔄 REINICIAR</button>
+            </div>
+        </header>
+
+        <!-- Main Game Canvas Container -->
+        <div id="canvas-container">
+            <canvas id="gameCanvas" width="960" height="540"></canvas>
+            
+            <!-- In-game Notification Banner -->
+            <div id="game-toast" class="toast hidden"></div>
+        </div>
+
+        <!-- Virtual Controls for Trackpad & Mouse -->
+        <footer id="touch-controls">
+            <div class="dpad-container">
+                <button id="vbtn-left" class="vbtn dpad-btn" title="Mover para Esquerda">◀</button>
+                <button id="vbtn-right" class="vbtn dpad-btn" title="Mover para Direita">▶</button>
+            </div>
+            <div class="hints-container">
+                <span class="keyboard-tip">⌨️ Use [←][→] ou [A][D] para andar | [ESPAÇO] ou [W] para pular | [E] interagir</span>
+            </div>
+            <div class="actions-container">
+                <button id="vbtn-action" class="vbtn action-btn secondary" title="Interagir com Objetos">⚡ INTERAGIR</button>
+                <button id="vbtn-jump" class="vbtn action-btn primary" title="Pular">🦘 PULAR</button>
+            </div>
+        </footer>
+
+        <!-- Modal Pedagógico BNCC (Diálogos, Quizzes e Desafios) -->
+        <div id="pedagogical-modal" class="modal-overlay hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div class="modal-badge" id="modal-skill-badge">BNCC EF05CO05</div>
+                    <h2 id="modal-title">Desafio dos Componentes</h2>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-illustration" class="modal-icon">💻</div>
+                    <p id="modal-concept-text" class="concept-explanation">
+                        Explicação conceitual clara sobre computação.
+                    </p>
+                    <div id="modal-challenge-area" class="challenge-options">
+                        <!-- Botões de opções inseridos dinamicamente -->
+                    </div>
+                    <div id="modal-feedback" class="feedback-msg hidden"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-confirm-btn" class="modal-action-btn hidden">CONTINUAR ➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Ajuda e BNCC -->
+        <div id="help-modal" class="modal-overlay hidden">
+            <div class="modal-card large">
+                <div class="modal-header">
+                    <div class="modal-badge">GUIA PEDAGÓGICO</div>
+                    <h2>Super Bit Bros - Manual do Aluno & Professor</h2>
+                </div>
+                <div class="modal-body scrollable">
+                    <div class="help-section">
+                        <h3>🎮 Como Jogar (Teclado e Trackpad)</h3>
+                        <p><strong>Teclado:</strong> Setas [←][→] ou [A][D] para correr; [Barra de Espaço], [W] ou [↑] para pular; [E] ou [Enter] para interagir.</p>
+                        <p><strong>Trackpad/Mouse:</strong> Clique ou toque nos botões virtuais na parte inferior da tela (◀, ▶, PULAR, INTERAGIR) e responda aos quizzes clicando nas opções.</p>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>📚 Habilidades BNCC Computação (5º Ano)</h3>
+                        <ul>
+                            <li><strong>Fase 1 (EF05CO05):</strong> Identificar Entrada (Teclado, Mouse), Saída (Monitor, Som), Processamento (CPU) e Armazenamento (RAM, HD/SSD).</li>
+                            <li><strong>Fase 2 (EF05CO06):</strong> Compreender as diferenças práticas entre Armazenamento Local (Offline, no aparelho) e Armazenamento Remoto (Nuvem, via internet).</li>
+                            <li><strong>Fase 3 (EF05CO07):</strong> Reconhecer a missão essencial do Sistema Operacional como o maestro que conecta programas e peças de hardware.</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>⭐ Dicas do Mestre Bit</h3>
+                        <p>Pule por baixo dos blocos com ponto de interrogação <strong>[?]</strong> para revelar itens e cartas de componentes. Pule na cabeça dos <strong>Bugs/Glitches</strong> para eliminá-los!</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-close-help" class="modal-action-btn">VOLTAR AO JOGO</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela de Fim de Fase / Vitória Final -->
+        <div id="victory-modal" class="modal-overlay hidden">
+            <div class="modal-card victory">
+                <div class="modal-header">
+                    <div class="modal-badge">MISSÃO CUMPRIDA! 🏆</div>
+                    <h2 id="victory-title">Fase Concluída!</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="trophy-anim">⭐ 🏅 ⭐</div>
+                    <p id="victory-message">Você dominou os conceitos do Mundo Digital!</p>
+                    <div class="stats-summary" id="victory-stats">
+                        <!-- Pontuação e resumo de aprendizado -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-next-level" class="modal-action-btn">PRÓXIMO MUNDO ➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do Jogo -->
+    <script>
+/* === audio.js === */
+/**
+ * Super Bit Bros - Sintetizador de Áudio Procedural (Web Audio API)
+ * Efeitos sonoros retrô 8-bit e trilha chiptune procedural sem dependências externas.
+ */
+
+class SoundSystem {
+    constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+        this.musicPlaying = false;
+        this.musicTimer = null;
+        this.tempo = 140; // BPM
+        this.step = 0;
+    }
+
+    init() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.isMuted) {
+            this.stopMusic();
+        } else {
+            this.startMusic();
+        }
+        return this.isMuted;
+    }
+
+    // Toca som de pulo (Mario jump style)
+    playJump() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.16);
+    }
+
+    // Toca som de moeda / bit coletado
+    playCoin() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+
+        // Nota B5 para E6
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.08);
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.36);
+    }
+
+    // Bate no bloco
+    playBump() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.11);
+    }
+
+    // Pisar no Bug/Inimigo
+    playStomp() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.18);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.19);
+    }
+
+    // PowerUp / Item Revelado
+    playPowerUp() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const notes = [330, 392, 659, 523, 587, 784];
+        
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const noteStart = now + i * 0.07;
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, noteStart);
+
+            gain.gain.setValueAtTime(0.2, noteStart);
+            gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.08);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteStart + 0.09);
+        });
+    }
+
+    // Resposta Correta do Desafio BNCC
+    playQuizCorrect() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const chord = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C
+
+        chord.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const t = now + idx * 0.08;
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(t);
+            osc.stop(t + 0.45);
+        });
+    }
+
+    // Resposta Incorreta
+    playQuizWrong() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.setValueAtTime(110, now + 0.15);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.36);
+    }
+
+    // Fanfarra de Vitória da Fase
+    playVictory() {
+        if (this.isMuted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const melody = [
+            { f: 523.25, d: 0.15 }, // C5
+            { f: 659.25, d: 0.15 }, // E5
+            { f: 783.99, d: 0.15 }, // G5
+            { f: 1046.50, d: 0.3 }, // C6
+            { f: 880.00, d: 0.2 },  // A5
+            { f: 1046.50, d: 0.6 }  // C6
+        ];
+
+        let offset = 0;
+        melody.forEach(item => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const t = now + offset;
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(item.f, t);
+
+            gain.gain.setValueAtTime(0.25, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + item.d);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(t);
+            osc.stop(t + item.d + 0.05);
+            offset += item.d + 0.05;
+        });
+    }
+
+    // Trilha Chiptune Retrô Contínua (BGM Procedural)
+    startMusic() {
+        if (this.isMuted || this.musicPlaying) return;
+        this.init();
+        this.musicPlaying = true;
+        this.step = 0;
+
+        // Linha melódica clássica estilo plataforma arcade
+        const notes = [
+            659.25, 659.25, 0, 659.25, 0, 523.25, 659.25, 0, // E, E, _, E, _, C, E, _
+            783.99, 0, 0, 0, 392.00, 0, 0, 0,                // G, _, _, _, g, _, _, _
+            523.25, 0, 0, 392.00, 0, 0, 329.63, 0,          // C, _, _, G, _, _, E, _
+            0, 440.00, 0, 493.88, 466.16, 440.00, 0, 0      // _, A, _, B, Bb, A, _, _
+        ];
+
+        const bassNotes = [
+            130.81, 0, 130.81, 0, 130.81, 0, 130.81, 0,
+            98.00, 0, 98.00, 0, 98.00, 0, 98.00, 0,
+            130.81, 0, 130.81, 0, 130.81, 0, 130.81, 0,
+            87.31, 0, 87.31, 0, 98.00, 0, 98.00, 0
+        ];
+
+        const stepDuration = 60 / (this.tempo * 2); // semicocheias
+
+        const playTick = () => {
+            if (!this.musicPlaying || this.isMuted) return;
+            const now = this.ctx.currentTime;
+            const noteIdx = this.step % notes.length;
+            const freqLead = notes[noteIdx];
+            const freqBass = bassNotes[noteIdx];
+
+            if (freqLead > 0) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freqLead, now);
+
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.9);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + stepDuration);
+            }
+
+            if (freqBass > 0) {
+                const bassOsc = this.ctx.createOscillator();
+                const bassGain = this.ctx.createGain();
+                bassOsc.type = 'triangle';
+                bassOsc.frequency.setValueAtTime(freqBass, now);
+
+                bassGain.gain.setValueAtTime(0.12, now);
+                bassGain.gain.exponentialRampToValueAtTime(0.01, now + stepDuration * 0.95);
+
+                bassOsc.connect(bassGain);
+                bassGain.connect(this.ctx.destination);
+                bassOsc.start(now);
+                bassOsc.stop(now + stepDuration);
+            }
+
+            this.step++;
+            this.musicTimer = setTimeout(playTick, stepDuration * 1000);
+        };
+
+        playTick();
+    }
+
+    stopMusic() {
+        this.musicPlaying = false;
+        if (this.musicTimer) {
+            clearTimeout(this.musicTimer);
+            this.musicTimer = null;
+        }
+    }
+}
+
+// Instância Global
+const sounds = new SoundSystem();
+
+
+/* === sprites.js === */
+// Polyfill para CanvasRenderingContext2D.roundRect caso navegador antigo seja utilizado
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        if (typeof r === 'undefined') r = 4;
+        if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
+        this.beginPath();
+        this.moveTo(x + (r.tl || 0), y);
+        this.lineTo(x + w - (r.tr || 0), y);
+        this.quadraticCurveTo(x + w, y, x + w, y + (r.tr || 0));
+        this.lineTo(x + w, y + h - (r.br || 0));
+        this.quadraticCurveTo(x + w, y + h, x + w - (r.br || 0), y + h);
+        this.lineTo(x + (r.bl || 0), y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - (r.bl || 0));
+        this.lineTo(x, y + (r.tl || 0));
+        this.quadraticCurveTo(x, y, x + (r.tl || 0), y);
+        this.closePath();
+        return this;
+    };
+}
+
+const Sprites = {
+    // Desenha o protagonista "Bit Boy" estilo Super Mario
+    drawPlayer(ctx, x, y, width, height, state, facingRight = true) {
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        if (!facingRight) {
+            ctx.scale(-1, 1);
+        }
+        ctx.translate(-width / 2, -height / 2);
+
+        const pw = width;
+        const ph = height;
+
+        // Boné Vermelho
+        ctx.fillStyle = "#d32f2f";
+        ctx.fillRect(pw * 0.2, ph * 0.05, pw * 0.65, ph * 0.2);
+        ctx.fillRect(pw * 0.45, ph * 0.15, pw * 0.5, ph * 0.1); // Aba do boné
+
+        // Rosto / Pele
+        ctx.fillStyle = "#ffcc80";
+        ctx.fillRect(pw * 0.25, ph * 0.25, pw * 0.55, ph * 0.25);
+
+        // Olho
+        ctx.fillStyle = "#212121";
+        ctx.fillRect(pw * 0.6, ph * 0.28, pw * 0.1, ph * 0.12);
+
+        // Bigode icônico
+        ctx.fillStyle = "#3e2723";
+        ctx.fillRect(pw * 0.5, ph * 0.4, pw * 0.32, ph * 0.1);
+
+        // Camisa Vermelha
+        ctx.fillStyle = "#d32f2f";
+        ctx.fillRect(pw * 0.2, ph * 0.5, pw * 0.6, ph * 0.25);
+
+        // Macacão Azul
+        ctx.fillStyle = "#1976d2";
+        ctx.fillRect(pw * 0.25, ph * 0.55, pw * 0.5, ph * 0.28);
+        ctx.fillRect(pw * 0.2, ph * 0.75, pw * 0.6, ph * 0.12);
+
+        // Botões dourados do macacão
+        ctx.fillStyle = "#ffd54f";
+        ctx.fillRect(pw * 0.32, ph * 0.62, pw * 0.08, ph * 0.08);
+        ctx.fillRect(pw * 0.6, ph * 0.62, pw * 0.08, ph * 0.08);
+
+        // Pernas e Sapatos com animação de corrida/pulo
+        ctx.fillStyle = "#4e342e";
+        if (state.isJumping) {
+            // Pose de salto heroico
+            ctx.fillRect(pw * 0.1, ph * 0.85, pw * 0.35, ph * 0.15);
+            ctx.fillRect(pw * 0.55, ph * 0.78, pw * 0.35, ph * 0.15);
+        } else if (state.isMoving) {
+            const frame = Math.floor(state.animTimer / 8) % 3;
+            if (frame === 0) {
+                ctx.fillRect(pw * 0.15, ph * 0.85, pw * 0.3, ph * 0.15);
+                ctx.fillRect(pw * 0.55, ph * 0.85, pw * 0.3, ph * 0.15);
+            } else if (frame === 1) {
+                ctx.fillRect(pw * 0.05, ph * 0.85, pw * 0.35, ph * 0.15);
+                ctx.fillRect(pw * 0.6, ph * 0.8, pw * 0.35, ph * 0.15);
+            } else {
+                ctx.fillRect(pw * 0.2, ph * 0.8, pw * 0.35, ph * 0.15);
+                ctx.fillRect(pw * 0.45, ph * 0.85, pw * 0.35, ph * 0.15);
+            }
+        } else {
+            // Em pé / Idle
+            ctx.fillRect(pw * 0.2, ph * 0.85, pw * 0.28, ph * 0.15);
+            ctx.fillRect(pw * 0.52, ph * 0.85, pw * 0.28, ph * 0.15);
+        }
+
+        ctx.restore();
+    },
+
+    // Bloco de Interrogação [?] brilhante
+    drawQuestionBlock(ctx, x, y, size, hit = false, animFrame = 0) {
+        ctx.save();
+        if (hit) {
+            // Bloco vazio já atingido
+            ctx.fillStyle = "#8d6e63";
+            ctx.fillRect(x, y, size, size);
+            ctx.strokeStyle = "#4e342e";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
+
+            // Parafusos nos cantos
+            ctx.fillStyle = "#3e2723";
+            ctx.fillRect(x + 4, y + 4, 3, 3);
+            ctx.fillRect(x + size - 7, y + 4, 3, 3);
+            ctx.fillRect(x + 4, y + size - 7, 3, 3);
+            ctx.fillRect(x + size - 7, y + size - 7, 3, 3);
+        } else {
+            // Bloco ativo dourado pulsante
+            const glow = Math.sin(animFrame * 0.1) * 15;
+            ctx.fillStyle = `rgb(${251 + glow * 0.2}, ${192 + glow}, 45)`;
+            ctx.fillRect(x, y, size, size);
+
+            // Borda e sombra 3D
+            ctx.fillStyle = "#ffeb3b";
+            ctx.fillRect(x, y, size, 4);
+            ctx.fillRect(x, y, 4, size);
+            ctx.fillStyle = "#f57f17";
+            ctx.fillRect(x, y + size - 4, size, 4);
+            ctx.fillRect(x + size - 4, y, 4, size);
+
+            // Parafusos
+            ctx.fillStyle = "#e65100";
+            ctx.fillRect(x + 5, y + 5, 3, 3);
+            ctx.fillRect(x + size - 8, y + 5, 3, 3);
+            ctx.fillRect(x + 5, y + size - 8, 3, 3);
+            ctx.fillRect(x + size - 8, y + size - 8, 3, 3);
+
+            // Símbolo "?"
+            ctx.fillStyle = "#ffffff";
+            ctx.font = `bold ${Math.floor(size * 0.65)}px 'Press Start 2P', monospace`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("?", x + size / 2, y + size / 2 + 2);
+
+            ctx.fillStyle = "#e65100";
+            ctx.fillText("?", x + size / 2 - 1, y + size / 2 + 1);
+        }
+        ctx.restore();
+    },
+
+    // Bloco de Tijolo Clássico
+    drawBrickBlock(ctx, x, y, size) {
+        ctx.save();
+        ctx.fillStyle = "#b71c1c";
+        ctx.fillRect(x, y, size, size);
+
+        ctx.strokeStyle = "#450a0a";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, size, size);
+
+        // Textura de tijolos horizontais
+        const midY = y + size / 2;
+        ctx.beginPath();
+        ctx.moveTo(x, midY);
+        ctx.lineTo(x + size, midY);
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size / 2, midY);
+        ctx.moveTo(x + size / 4, midY);
+        ctx.lineTo(x + size / 4, y + size);
+        ctx.moveTo(x + 3 * size / 4, midY);
+        ctx.lineTo(x + 3 * size / 4, y + size);
+        ctx.stroke();
+
+        ctx.restore();
+    },
+
+    // Bloco de Terra com Grama / Circuito Integrado Verde
+    drawGroundTile(ctx, x, y, size, theme = "world1") {
+        ctx.save();
+        if (theme === "world3") {
+            // Tema Placa-Mãe / Circuito Tecnológico
+            ctx.fillStyle = "#0d2b1d";
+            ctx.fillRect(x, y, size, size);
+
+            // Linhas douradas de circuito
+            ctx.strokeStyle = "#ffd54f";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y + size * 0.3);
+            ctx.lineTo(x + size * 0.6, y + size * 0.3);
+            ctx.lineTo(x + size, y + size * 0.8);
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffd54f";
+            ctx.beginPath();
+            ctx.arc(x + size * 0.6, y + size * 0.3, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Borda superior brilhante
+            ctx.fillStyle = "#00e676";
+            ctx.fillRect(x, y, size, 4);
+        } else if (theme === "world2") {
+            // Tema Nuvem e Servidor
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(x, y, size, size);
+            ctx.fillStyle = "#38bdf8";
+            ctx.fillRect(x, y, size, 5);
+            ctx.fillStyle = "#0284c7";
+            ctx.fillRect(x + 4, y + 10, size - 8, 4);
+            ctx.fillRect(x + 4, y + 20, size - 8, 4);
+        } else {
+            // Tema Clássico Mario: Terra Marrom com Topo Verde Gramado
+            ctx.fillStyle = "#8d6e63";
+            ctx.fillRect(x, y, size, size);
+
+            ctx.fillStyle = "#43a047";
+            ctx.fillRect(x, y, size, 8);
+
+            ctx.fillStyle = "#2e7d32";
+            for (let i = 0; i < size; i += 8) {
+                ctx.fillRect(x + i, y + 8, 4, 3);
+            }
+        }
+        ctx.restore();
+    },
+
+    // Cano Verde de Dados / Barramento de Sistema
+    drawPipe(ctx, x, y, width, height) {
+        ctx.save();
+        const headHeight = 28;
+
+        // Cabeça do cano
+        ctx.fillStyle = "#2e7d32";
+        ctx.fillRect(x - 4, y, width + 8, headHeight);
+
+        // Brilho do topo
+        ctx.fillStyle = "#4caf50";
+        ctx.fillRect(x - 2, y + 3, width * 0.3, headHeight - 6);
+        ctx.fillStyle = "#81c784";
+        ctx.fillRect(x + 2, y + 5, 4, headHeight - 10);
+
+        // Sombra lateral
+        ctx.fillStyle = "#1b5e20";
+        ctx.fillRect(x + width - 4, y, 8, headHeight);
+
+        // Corpo do cano
+        ctx.fillStyle = "#2e7d32";
+        ctx.fillRect(x, y + headHeight, width, height - headHeight);
+
+        // Brilho no corpo
+        ctx.fillStyle = "#4caf50";
+        ctx.fillRect(x + 4, y + headHeight, width * 0.25, height - headHeight);
+        ctx.fillStyle = "#1b5e20";
+        ctx.fillRect(x + width - 6, y + headHeight, 6, height - headHeight);
+
+        // Borda preta clássica
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 4, y, width + 8, headHeight);
+        ctx.strokeRect(x, y + headHeight, width, height - headHeight);
+
+        ctx.restore();
+    },
+
+    // Moeda Binária / Bit ('0' ou '1' giratório)
+    drawCoin(ctx, x, y, size, animTimer = 0) {
+        ctx.save();
+        const frame = Math.floor(animTimer / 10) % 4;
+        const scaleX = [1, 0.6, 0.15, 0.6][frame];
+        const char = Math.floor(animTimer / 40) % 2 === 0 ? "1" : "0";
+
+        ctx.translate(x + size / 2, y + size / 2);
+        ctx.scale(scaleX, 1);
+
+        // Borda dourada
+        ctx.fillStyle = "#ffd54f";
+        ctx.beginPath();
+        ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#f57f17";
+        ctx.beginPath();
+        ctx.arc(0, 0, size / 2 - 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (scaleX > 0.4) {
+            ctx.fillStyle = "#fff";
+            ctx.font = `bold ${Math.floor(size * 0.6)}px 'Press Start 2P', monospace`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(char, 0, 1);
+        }
+
+        ctx.restore();
+    },
+
+    // Inimigo: Bug / Glitch estilo Goomba digital
+    drawEnemy(ctx, x, y, width, height, isSquashed = false, animTimer = 0) {
+        ctx.save();
+        if (isSquashed) {
+            // Inimigo achatado após pulo
+            ctx.fillStyle = "#7b1fa2";
+            ctx.fillRect(x, y + height * 0.7, width, height * 0.3);
+            ctx.fillStyle = "#f44336";
+            ctx.fillRect(x + width * 0.2, y + height * 0.75, width * 0.6, 4);
+        } else {
+            // Corpo do Bug
+            const bob = Math.sin(animTimer * 0.2) * 2;
+            ctx.fillStyle = "#8e24aa";
+            ctx.fillRect(x + 2, y + 4 + bob, width - 4, height - 8);
+
+            // Cabeça / Antenas
+            ctx.fillStyle = "#ba68c8";
+            ctx.fillRect(x + 6, y + bob, 4, 6);
+            ctx.fillRect(x + width - 10, y + bob, 4, 6);
+
+            // Olhos vermelhos ameaçadores de bug
+            ctx.fillStyle = "#f44336";
+            ctx.fillRect(x + 6, y + 10 + bob, 6, 6);
+            ctx.fillRect(x + width - 12, y + 10 + bob, 6, 6);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(x + 7, y + 11 + bob, 2, 2);
+            ctx.fillRect(x + width - 11, y + 11 + bob, 2, 2);
+
+            // Patinhas pixeladas alternando
+            ctx.fillStyle = "#4a148c";
+            const walk = Math.floor(animTimer / 10) % 2;
+            if (walk === 0) {
+                ctx.fillRect(x, y + height - 5, 8, 5);
+                ctx.fillRect(x + width - 8, y + height - 5, 8, 5);
+            } else {
+                ctx.fillRect(x + 3, y + height - 5, 8, 5);
+                ctx.fillRect(x + width - 11, y + height - 5, 8, 5);
+            }
+        }
+        ctx.restore();
+    },
+
+    // Mastro com Bandeira de Vitória do Mario
+    drawFlagpole(ctx, x, y, height, flagProgress = 0) {
+        ctx.save();
+        // Mastro metálico
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x + 8, y, 6, height);
+        ctx.fillStyle = "#ffd54f";
+        ctx.beginPath();
+        ctx.arc(x + 11, y, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bandeira verde subindo/descendo
+        const flagY = y + 10 + (height - 40) * (1 - flagProgress);
+        ctx.fillStyle = "#43a047";
+        ctx.beginPath();
+        ctx.moveTo(x + 14, flagY);
+        ctx.lineTo(x + 45, flagY + 12);
+        ctx.lineTo(x + 14, flagY + 24);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ícone de chip/coração na bandeira
+        ctx.fillStyle = "#fff";
+        ctx.font = "12px sans-serif";
+        ctx.fillText("💻", x + 18, flagY + 16);
+
+        // Base de pedra
+        ctx.fillStyle = "#455a64";
+        ctx.fillRect(x, y + height - 16, 24, 16);
+
+        ctx.restore();
+    },
+
+    // Nuvem alegre com olhos do Mario
+    drawCloud(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.scale(scale, scale);
+        ctx.fillStyle = "#ffffff";
+
+        // Círculos da nuvem
+        ctx.beginPath();
+        ctx.arc(x + 20, y + 20, 15, 0, Math.PI * 2);
+        ctx.arc(x + 40, y + 12, 18, 0, Math.PI * 2);
+        ctx.arc(x + 60, y + 20, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x + 10, y + 18, 60, 14);
+
+        // Olhos da nuvem (estilo Super Mario Bros)
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x + 32, y + 16, 3, 7);
+        ctx.fillRect(x + 46, y + 16, 3, 7);
+
+        ctx.restore();
+    },
+
+    // Plataforma Nuvem Flutuante (Fase 2)
+    drawCloudPlatform(ctx, x, y, width, height) {
+        ctx.save();
+        ctx.fillStyle = "#e0f2fe";
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, 16);
+        ctx.fill();
+
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Detalhe de conexão de dados
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("☁️ NUVEM", x + width / 2, y + height / 2 + 5);
+
+        ctx.restore();
+    },
+
+    // Ícone de Item Flutuante (Hardware Card, Wi-Fi ou Módulo de SO)
+    drawPedagogicalItem(ctx, x, y, item, animTimer = 0) {
+        ctx.save();
+        const floatOffset = Math.sin(animTimer * 0.1) * 4;
+        const drawY = y + floatOffset;
+
+        // Aura de destaque
+        ctx.shadowColor = "#ffd54f";
+        ctx.shadowBlur = 12;
+
+        ctx.fillStyle = "#1e293b";
+        ctx.strokeStyle = "#ffd54f";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x, drawY, 36, 36, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.font = "20px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(item.icon || "💾", x + 18, drawY + 18);
+
+        ctx.restore();
+    },
+
+    // Castelo de Final de Fase (Estilo Super Mario)
+    drawCastle(ctx, x, y, width = 180, height = 180) {
+        ctx.save();
+        // Parede principal de tijolos cinza/marrom
+        ctx.fillStyle = "#5d4037";
+        ctx.fillRect(x, y + 50, width, height - 50);
+
+        // Ameias / Torres do topo
+        ctx.fillStyle = "#4e342e";
+        const towerW = 32;
+        // Torre esquerda
+        ctx.fillRect(x, y + 20, towerW, 40);
+        ctx.fillRect(x - 4, y + 10, towerW + 8, 12);
+        // Torre central mais alta
+        ctx.fillRect(x + width / 2 - 20, y, 40, 60);
+        ctx.fillRect(x + width / 2 - 24, y - 10, 48, 12);
+        // Torre direita
+        ctx.fillRect(x + width - towerW, y + 20, towerW, 40);
+        ctx.fillRect(x + width - towerW - 4, y + 10, towerW + 8, 12);
+
+        // Bandeirinha no topo do castelo
+        ctx.fillStyle = "#e53935";
+        ctx.beginPath();
+        ctx.moveTo(x + width / 2, y - 10);
+        ctx.lineTo(x + width / 2 + 16, y - 16);
+        ctx.lineTo(x + width / 2, y - 22);
+        ctx.closePath();
+        ctx.fill();
+
+        // Porta preta em arco (onde Mario entra)
+        ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        ctx.arc(x + width / 2, y + height - 45, 24, Math.PI, 0, false);
+        ctx.rect(x + width / 2 - 24, y + height - 45, 48, 45);
+        ctx.fill();
+
+        // Janelas frestas
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x + 24, y + 70, 12, 18);
+        ctx.fillRect(x + width - 36, y + 70, 12, 18);
+
+        ctx.restore();
+    },
+
+    // Chefão "Bug do Caos" (Fase 3)
+    drawBoss(ctx, x, y, width, height, animTimer = 0) {
+        ctx.save();
+        const bob = Math.sin(animTimer * 0.15) * 4;
+        
+        // Aura vermelha perigosa
+        ctx.shadowColor = "#ff1744";
+        ctx.shadowBlur = 15;
+
+        // Corpo Robusto
+        ctx.fillStyle = "#4a148c";
+        ctx.fillRect(x + 4, y + 8 + bob, width - 8, height - 12);
+
+        // Coroa de Glitch dourada
+        ctx.fillStyle = "#ffd54f";
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + bob + 4);
+        ctx.lineTo(x + 18, y + bob - 12);
+        ctx.lineTo(x + width / 2, y + bob - 4);
+        ctx.lineTo(x + width - 18, y + bob - 12);
+        ctx.lineTo(x + width - 10, y + bob + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Olhos Maliciosos
+        ctx.fillStyle = "#ff1744";
+        ctx.fillRect(x + 14, y + 18 + bob, 14, 10);
+        ctx.fillRect(x + width - 28, y + 18 + bob, 14, 10);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x + 18, y + 20 + bob, 6, 6);
+        ctx.fillRect(x + width - 24, y + 20 + bob, 6, 6);
+
+        // Presas
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x + 20, y + height - 12 + bob, 6, 8);
+        ctx.fillRect(x + width - 26, y + height - 12 + bob, 6, 8);
+
+        ctx.restore();
+    }
+};
+
+
+/* === pedagogical.js === */
+/**
+ * Super Bit Bros - Módulo Pedagógico BNCC Computação (5º Ano)
+ * Conteúdos, desafios e quizzes interativos baseados em:
+ * (EF05CO05), (EF05CO06) e (EF05CO07).
+ */
+
+const PedagogicalData = {
+    // Fase 1: Componentes Principais do Computador (EF05CO05)
+    world1: {
+        title: "Mundo 1: O Reino dos Componentes",
+        skill: "BNCC (EF05CO05)",
+        description: "Identifique os componentes principais de um computador: Entrada, Saída, Processamento e Armazenamento!",
+        
+        // Itens que saem das caixas '?'
+        items: [
+            {
+                id: "teclado_mouse",
+                name: "Teclado e Mouse",
+                category: "Dispositivo de Entrada",
+                icon: "⌨️",
+                concept: "Dispositivos de Entrada enviam informações e ordens de nós (humanos) para dentro do computador!",
+                question: "Para que servem dispositivos de entrada como o teclado e o mouse?",
+                options: [
+                    { text: "Mostrar imagens e vídeos na tela", correct: false },
+                    { text: "Enviar comandos e dados para o computador", correct: true },
+                    { text: "Fazer o computador desligar sozinho", correct: false },
+                    { text: "Guardar arquivos para sempre", correct: false }
+                ],
+                explanation: "Muito bem! O teclado e o mouse são 'portas de entrada': tudo o que você digita ou clica entra no computador como comandos."
+            },
+            {
+                id: "cpu",
+                name: "Processador (CPU)",
+                category: "Processamento",
+                icon: "🧠",
+                concept: "A CPU é o 'cérebro' do computador! Ela calcula, toma decisões e executa as instruções de todos os programas.",
+                question: "Qual é a função principal da CPU (Processador)?",
+                options: [
+                    { text: "Tocar música bem alto", correct: false },
+                    { text: "Imprimir folhas de papel coloridas", correct: false },
+                    { text: "Processar dados e executar cálculos dos programas", correct: true },
+                    { text: "Servir de apoio para a mesa", correct: false }
+                ],
+                explanation: "Exatamente! A CPU é o coração do processamento. Ela realiza bilhões de cálculos por segundo para seus jogos funcionarem."
+            },
+            {
+                id: "ssd_ram",
+                name: "SSD / Memória",
+                category: "Armazenamento",
+                icon: "💾",
+                concept: "Os dispositivos de armazenamento guardam suas fotos, jogos e trabalhos escolares para você nunca perdê-los.",
+                question: "Onde ficam guardados seus arquivos e fotos mesmo depois de desligar o computador?",
+                options: [
+                    { text: "No cabo de energia", correct: false },
+                    { text: "Dentro do monitor", correct: false },
+                    { text: "Na caixinha de som", correct: false },
+                    { text: "Nos dispositivos de Armazenamento (SSD / HD)", correct: true }
+                ],
+                explanation: "Excelente! O SSD e o HD são memórias permanentes de armazenamento. Eles mantêm tudo seguro para quando você ligar a máquina de novo."
+            },
+            {
+                id: "monitor_som",
+                name: "Monitor e Caixas de Som",
+                category: "Dispositivo de Saída",
+                icon: "🖥️",
+                concept: "Dispositivos de Saída recebem os resultados do computador e mostram ou tocam para nós.",
+                question: "Se você quer ver as imagens do seu jogo e escutar os efeitos sonoros, que tipo de dispositivo você usa?",
+                options: [
+                    { text: "Dispositivos de Saída (Monitor e Som)", correct: true },
+                    { text: "Apenas dispositivos de Entrada", correct: false },
+                    { text: "A tomada da parede", correct: false },
+                    { text: "O mouse de bolinha", correct: false }
+                ],
+                explanation: "Perfeito! A tela e os alto-falantes transformam os dados binários do computador em luz e som que podemos ver e ouvir."
+            }
+        ],
+
+        // Desafio do Castelo de Final de Fase (Portão da CPU)
+        gateChallenge: {
+            title: "Desafio Final: Montando o Computador",
+            icon: "🏰",
+            concept: "O Castelo dos Componentes precisa de energia! Para abrir o portão da bandeira, classifique corretamente:",
+            question: "Um MICROFONE que grava sua voz para falar com amigos no jogo é um dispositivo de:",
+            options: [
+                { text: "Saída (imprime a voz no papel)", correct: false },
+                { text: "Entrada (leva sua voz para o computador)", correct: true },
+                { text: "Armazenamento remoto", correct: false },
+                { text: "Nenhuma das anteriores", correct: false }
+            ],
+            explanation: "Incrível! O microfone captura as ondas sonoras do mundo real e envia para dentro do computador como dados digitais: é ENTRADA!"
+        }
+    },
+
+    // Fase 2: Armazenamento Local vs Remoto / Nuvem (EF05CO06)
+    world2: {
+        title: "Mundo 2: O Vale dos Dados (Local vs Nuvem)",
+        skill: "BNCC (EF05CO06)",
+        description: "Aprenda quando os dados estão salvos no seu aparelho (Local) ou na internet (Nuvem Remota)!",
+        
+        items: [
+            {
+                id: "armazenamento_local",
+                name: "Disco Local (HD / Pen Drive)",
+                category: "Armazenamento Local",
+                icon: "💽",
+                concept: "Armazenamento LOCAL significa que os arquivos estão guardados na memória física do próprio aparelho que você está usando.",
+                question: "Qual a maior vantagem de salvar um arquivo no Armazenamento Local (como o HD do seu notebook)?",
+                options: [
+                    { text: "Qualquer pessoa no planeta pode ver sem autorização", correct: false },
+                    { text: "O notebook fica 10x mais pesado fisicamente", correct: false },
+                    { text: "Você pode abrir o arquivo mesmo sem nenhuma internet!", correct: true },
+                    { text: "Nunca ocupa nenhum espaço de memória", correct: false }
+                ],
+                explanation: "Isso mesmo! O armazenamento local não precisa de conexão de rede ou Wi-Fi. Está sempre ali pertinho do processador."
+            },
+            {
+                id: "armazenamento_nuvem",
+                name: "A Nuvem (Servidor Remoto)",
+                category: "Armazenamento Remoto",
+                icon: "☁️",
+                concept: "Armazenamento REMOTO (Nuvem) guarda os arquivos em grandes computadores (servidores) espalhados pelo mundo conectados pela internet.",
+                question: "Por que muitas pessoas salvam documentos importantes na Nuvem (Remoto)?",
+                options: [
+                    { text: "Porque na nuvem os arquivos chovem quando chove", correct: false },
+                    { text: "Para poder abrir de qualquer computador, tablet ou celular com internet", correct: true },
+                    { text: "Porque é proibido salvar no próprio computador", correct: false },
+                    { text: "Para o computador gastar menos bateria", correct: false }
+                ],
+                explanation: "Certíssimo! A Nuvem permite acessar seus arquivos de onde você estiver e protege seus dados caso seu computador local quebre!"
+            },
+            {
+                id: "wifi_token",
+                name: "Conexão de Internet (Wi-Fi)",
+                category: "Ponte de Rede",
+                icon: "📶",
+                concept: "Para enviar dados do seu computador local para a Nuvem remota, você precisa de uma conexão de rede (Internet).",
+                question: "Se a internet cair na sua casa, o que acontece com os arquivos guardados na Nuvem?",
+                options: [
+                    { text: "Eles são deletados para sempre", correct: false },
+                    { text: "Eles caem no chão da sua sala", correct: false },
+                    { text: "O computador explode", correct: false },
+                    { text: "Eles continuam salvos lá, mas você só poderá acessá-los quando a internet voltar", correct: true }
+                ],
+                explanation: "Exatamente! Seus dados na Nuvem continuam seguros nos servidores, aguardando você se reconectar à internet."
+            }
+        ],
+
+        gateChallenge: {
+            title: "Desafio Final: O Dilema dos Arquivos",
+            icon: "🌐",
+            concept: "Situação prática de computação: você precisa decidir o melhor local para guardar o arquivo!",
+            question: "Ana e Lucas estão fazendo um trabalho da escola juntos e precisam editar o mesmo arquivo de suas casas. Onde eles devem salvar?",
+            options: [
+                { text: "Apenas no Pen Drive que ficou esquecido na mochila", correct: false },
+                { text: "Apenas na memória RAM do computador", correct: false },
+                { text: "No Armazenamento Remoto (Nuvem / Google Drive / OneDrive)", correct: true },
+                { text: "Imprimir no papel e queimar o arquivo", correct: false }
+            ],
+            explanation: "Perfeito! A Nuvem é ideal para trabalho colaborativo e compartilhamento remoto entre pessoas!"
+        }
+    },
+
+    // Fase 3: O Castelo do Sistema Operacional (EF05CO07)
+    world3: {
+        title: "Mundo 3: O Castelo do Sistema Operacional",
+        skill: "BNCC (EF05CO07)",
+        description: "Reconheça a necessidade fundamental do Sistema Operacional para executar programas e gerenciar o hardware!",
+
+        items: [
+            {
+                id: "so_maestro",
+                name: "O Maestro do Computador",
+                category: "Sistema Operacional",
+                icon: "⚙️",
+                concept: "O Sistema Operacional (como Windows, Linux, Android) é como o maestro de uma orquestra: ele comanda todas as peças para tocarem juntas sem desafinar!",
+                question: "O que aconteceria se um computador NÃO tivesse nenhum Sistema Operacional instalado?",
+                options: [
+                    { text: "Ele funcionaria 10 vezes mais rápido", correct: false },
+                    { text: "Os programas e jogos não conseguiriam rodar nem usar as peças do computador", correct: true },
+                    { text: "Ele viraria um videogame da Nintendo automaticamente", correct: false },
+                    { text: "A tela ficaria colorida com fogos de artifício", correct: false }
+                ],
+                explanation: "Perfeito! Sem o Sistema Operacional, o computador é apenas um amontoado de peças sem saber como conversar entre si!"
+            },
+            {
+                id: "gerenciador_hardware",
+                name: "Gerenciador de Hardware",
+                category: "Controle de Dispositivos",
+                icon: "🔌",
+                concept: "Quando você abre um jogo, o Sistema Operacional avisa a placa de vídeo para desenhar os gráficos e a caixa de som para tocar a música.",
+                question: "Quem é responsável por organizar quais programas podem usar o processador e a memória a cada segundo?",
+                options: [
+                    { text: "O Sistema Operacional", correct: true },
+                    { text: "O cabo de rede", correct: false },
+                    { text: "A tampa plástica do gabinete", correct: false },
+                    { text: "A tomada da parede", correct: false }
+                ],
+                explanation: "Correto! O Sistema Operacional gerencia o tempo do processador e divide a memória para que nenhum aplicativo trave o outro."
+            },
+            {
+                id: "interface_grafica",
+                name: "Interface com o Usuário",
+                category: "Usabilidade",
+                icon: "🪟",
+                concept: "O Sistema Operacional cria janelas, botões, pastas e ícones para que qualquer pessoa possa usar o computador com facilidade!",
+                question: "Por que é fácil para crianças e adultos usarem celulares e computadores modernos?",
+                options: [
+                    { text: "Porque as pessoas precisam memorizar códigos de física quântica", correct: false },
+                    { text: "Porque o computador lê os pensamentos das pessoas", correct: false },
+                    { text: "Porque tudo funciona por telepatia", correct: false },
+                    { text: "Porque o Sistema Operacional oferece uma Interface Gráfica com ícones, toques e janelas amigáveis", correct: true }
+                ],
+                explanation: "Excelente! A interface gráfica criada pelo Sistema Operacional traduz códigos complexos em botões fáceis e intuitivos."
+            }
+        ],
+
+        gateChallenge: {
+            title: "Grande Batalha: Domando o Bug do Caos",
+            icon: "👾",
+            concept: "O Bug do Caos tentou bloquear o computador! Restaure a ordem provando que você compreende o Sistema Operacional:",
+            question: "Qual das frases abaixo resume melhor a importância do Sistema Operacional?",
+            options: [
+                { text: "Ele serve apenas para desenhar o papel de parede", correct: false },
+                { text: "Ele é apenas uma peça de plástico dentro do teclado", correct: false },
+                { text: "Ele gerencia o hardware (peças) e fornece a base para que todos os nossos programas e jogos possam funcionar", correct: true },
+                { text: "Ele é desnecessário porque os jogos falam sozinhos com os chips", correct: false }
+            ],
+            explanation: "VITÓRIA TOTAL! Você compreendeu perfeitamente o papel vital do Sistema Operacional! O computador está totalmente recuperado e pronto para o futuro digital!"
+        }
+    }
+};
+
+class PedagogicalController {
+    constructor() {
+        this.currentWorld = "world1";
+        this.discoveredItems = new Set();
+        this.activeChallenge = null;
+        this.onSuccessCallback = null;
+
+        // Elementos de UI
+        this.modal = document.getElementById("pedagogical-modal");
+        this.badge = document.getElementById("modal-skill-badge");
+        this.title = document.getElementById("modal-title");
+        this.icon = document.getElementById("modal-illustration");
+        this.conceptText = document.getElementById("modal-concept-text");
+        this.challengeArea = document.getElementById("modal-challenge-area");
+        this.feedback = document.getElementById("modal-feedback");
+        this.confirmBtn = document.getElementById("modal-confirm-btn");
+        this.toast = document.getElementById("game-toast");
+
+        this.initEvents();
+    }
+
+    initEvents() {
+        this.confirmBtn.addEventListener("click", () => {
+            this.closeModal();
+            if (this.onSuccessCallback) {
+                const cb = this.onSuccessCallback;
+                this.onSuccessCallback = null;
+                cb();
+            }
+        });
+    }
+
+    setWorld(worldKey) {
+        this.currentWorld = worldKey;
+    }
+
+    showToast(message, duration = 3000) {
+        if (!this.toast) return;
+        this.toast.textContent = message;
+        this.toast.classList.remove("hidden");
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => {
+            this.toast.classList.add("hidden");
+        }, duration);
+    }
+
+    // Abre modal para desafio ou item de bloco '?'
+    openItemModal(item, onComplete) {
+        this.activeChallenge = item;
+        this.onSuccessCallback = onComplete;
+        const worldData = PedagogicalData[this.currentWorld];
+
+        this.badge.textContent = worldData.skill;
+        this.title.textContent = item.name + " (" + item.category + ")";
+        this.icon.textContent = item.icon || "💡";
+        this.conceptText.textContent = item.concept;
+
+        // Renderiza botões de opção
+        this.challengeArea.innerHTML = "";
+        this.feedback.className = "feedback-msg hidden";
+        this.confirmBtn.classList.add("hidden");
+
+        const questionTitle = document.createElement("p");
+        questionTitle.style.fontWeight = "bold";
+        questionTitle.style.marginBottom = "10px";
+        questionTitle.style.color = "#fbc02d";
+        questionTitle.style.gridColumn = "1 / -1";
+        questionTitle.textContent = "❓ " + item.question;
+        this.challengeArea.appendChild(questionTitle);
+
+        // Clona e embaralha as opções aleatoriamente (Fisher-Yates) para que a resposta correta
+        // fique distribuída aleatoriamente entre as alternativas A, B, C ou D a cada exibição!
+        const shuffledOptions = [...item.options];
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+        }
+
+        shuffledOptions.forEach((opt, idx) => {
+            const btn = document.createElement("button");
+            btn.className = "opt-btn";
+            btn.innerHTML = `<span>${["A", "B", "C", "D"][idx]})</span> <span>${opt.text}</span>`;
+            btn.addEventListener("click", () => this.handleAnswer(opt, btn, item.explanation));
+            this.challengeArea.appendChild(btn);
+        });
+
+        this.modal.classList.remove("hidden");
+    }
+
+    // Trata clique na resposta
+    handleAnswer(option, btnElement, explanation) {
+        const buttons = this.challengeArea.querySelectorAll(".opt-btn");
+
+        if (option.correct) {
+            sounds.playQuizCorrect();
+            btnElement.classList.add("correct");
+            buttons.forEach(b => b.disabled = true);
+
+            this.feedback.className = "feedback-msg success";
+            this.feedback.innerHTML = `<span>✅</span> <span>${explanation}</span>`;
+            this.confirmBtn.classList.remove("hidden");
+            this.confirmBtn.focus();
+
+            // Adiciona pontuação extra
+            window.gameEngine?.addScore(500);
+            this.showToast("⭐ +500 Pontos de Conhecimento BNCC!", 2500);
+        } else {
+            sounds.playQuizWrong();
+            btnElement.classList.add("wrong");
+            this.feedback.className = "feedback-msg error";
+            this.feedback.innerHTML = "<span>❌</span> <span>Ops! Tente novamente. Lembre-se do conceito lido acima!</span>";
+            setTimeout(() => {
+                btnElement.classList.remove("wrong");
+            }, 1200);
+        }
+    }
+
+    closeModal() {
+        this.modal.classList.add("hidden");
+        window.gameEngine?.resume();
+    }
+}
+
+
+/* === levels.js === */
+/**
+ * Super Bit Bros - Definição dos Mundos e Fases Pedagógicas
+ * Fases 1, 2 e 3 com design de plataforma clássico no estilo Super Mario.
+ */
+
+const LevelManager = {
+    tileSize: 40,
+
+    getLevel(levelIndex) {
+        switch(levelIndex) {
+            case 1:
+                return this.getWorld1();
+            case 2:
+                return this.getWorld2();
+            case 3:
+                return this.getWorld3();
+            default:
+                return this.getWorld1();
+        }
+    },
+
+    // Mundo 1: O Reino dos Componentes (EF05CO05)
+    getWorld1() {
+        const T = this.tileSize;
+        return {
+            worldId: "world1",
+            levelNumber: "1-1",
+            name: "O Reino dos Componentes",
+            theme: "world1",
+            bgColor: "#5c94fc", // Céu azul clássico
+            width: 3000,
+            height: 540,
+            spawn: { x: 80, y: 380 },
+            flagX: 2700,
+
+            // Plataformas e Blocos
+            blocks: [
+                // Chão Contínuo com pequenos desníveis
+                { x: 0, y: 460, w: 900, h: 80, type: "ground" },
+                { x: 980, y: 460, w: 800, h: 80, type: "ground" },
+                { x: 1860, y: 460, w: 1200, h: 80, type: "ground" },
+
+                // Canos Verdes (Barramentos)
+                { x: 420, y: 380, w: 60, h: 80, type: "pipe" },
+                { x: 760, y: 340, w: 60, h: 120, type: "pipe" },
+                { x: 1480, y: 360, w: 60, h: 100, type: "pipe" },
+                { x: 2160, y: 360, w: 60, h: 100, type: "pipe" },
+
+                // Seção 1: Bloco '?' com Teclado e Mouse (Entrada)
+                { x: 240, y: 320, w: T, h: T, type: "question", itemId: "teclado_mouse" },
+                { x: 280, y: 320, w: T, h: T, type: "brick" },
+                { x: 320, y: 320, w: T, h: T, type: "question", hasCoin: true },
+                { x: 360, y: 320, w: T, h: T, type: "brick" },
+
+                // Seção 2: Bloco '?' com CPU (Processamento)
+                { x: 600, y: 280, w: T, h: T, type: "question", itemId: "cpu" },
+                { x: 640, y: 280, w: T, h: T, type: "brick" },
+                { x: 680, y: 280, w: T, h: T, type: "question", hasCoin: true },
+
+                // Plataformas elevadas sobre o vão
+                { x: 1100, y: 330, w: 120, h: T, type: "brick" },
+                { x: 1260, y: 250, w: T, h: T, type: "question", itemId: "ssd_ram" }, // Armazenamento
+                { x: 1300, y: 250, w: 120, h: T, type: "brick" },
+
+                // Seção 3: Bloco '?' com Monitor e Som (Saída)
+                { x: 1720, y: 320, w: T, h: T, type: "question", itemId: "monitor_som" },
+                { x: 1760, y: 320, w: T, h: T, type: "brick" },
+                { x: 1800, y: 320, w: T, h: T, type: "question", hasCoin: true },
+
+                // Escadaria para o mastro
+                { x: 2400, y: 420, w: 40, h: 40, type: "brick" },
+                { x: 2440, y: 380, w: 40, h: 80, type: "brick" },
+                { x: 2480, y: 340, w: 40, h: 120, type: "brick" },
+                { x: 2520, y: 300, w: 40, h: 160, type: "brick" }
+            ],
+
+            // Moedas Binárias
+            coins: [
+                { x: 200, y: 400 }, { x: 280, y: 260 }, { x: 360, y: 260 },
+                { x: 500, y: 410 }, { x: 540, y: 410 }, { x: 580, y: 410 },
+                { x: 1120, y: 280 }, { x: 1160, y: 280 }, { x: 1200, y: 280 },
+                { x: 1960, y: 410 }, { x: 2000, y: 410 }, { x: 2040, y: 410 }
+            ],
+
+            // Inimigos Glitch/Bug
+            enemies: [
+                { x: 500, y: 420, vx: -1.2 },
+                { x: 1180, y: 420, vx: -1.2 },
+                { x: 1620, y: 420, vx: 1.2 },
+                { x: 2050, y: 420, vx: -1.2 },
+                { x: 2320, y: 420, vx: -1.2 }
+            ],
+
+            // Nuvens decorativas de fundo
+            scenery: [
+                { x: 100, y: 80, scale: 1.2 },
+                { x: 500, y: 60, scale: 0.9 },
+                { x: 900, y: 100, scale: 1.4 },
+                { x: 1400, y: 70, scale: 1 },
+                { x: 1900, y: 90, scale: 1.3 },
+                { x: 2400, y: 60, scale: 1.1 }
+            ]
+        };
+    },
+
+    // Mundo 2: Vale dos Dados (Local vs Nuvem - EF05CO06)
+    getWorld2() {
+        const T = this.tileSize;
+        return {
+            worldId: "world2",
+            levelNumber: "2-1",
+            name: "O Vale dos Dados (Local vs Nuvem)",
+            theme: "world2",
+            bgColor: "#1e1b4b", // Céu espacial/tecnológico profundo
+            width: 3200,
+            height: 540,
+            spawn: { x: 80, y: 380 },
+            flagX: 2900,
+
+            blocks: [
+                // Plataformas Terrestres (Armazenamento Local)
+                { x: 0, y: 460, w: 750, h: 80, type: "ground" },
+                { x: 880, y: 460, w: 600, h: 80, type: "ground" },
+                { x: 1620, y: 460, w: 600, h: 80, type: "ground" },
+                { x: 2340, y: 460, w: 900, h: 80, type: "ground" },
+
+                // Canos
+                { x: 380, y: 370, w: 60, h: 90, type: "pipe" },
+                { x: 1100, y: 360, w: 60, h: 100, type: "pipe" },
+                { x: 1820, y: 360, w: 60, h: 100, type: "pipe" },
+
+                // Bloco 1: Armazenamento Local (No chão)
+                { x: 220, y: 320, w: T, h: T, type: "question", itemId: "armazenamento_local" },
+                { x: 260, y: 320, w: T, h: T, type: "brick" },
+                { x: 300, y: 320, w: T, h: T, type: "question", hasCoin: true },
+
+                // Plataformas Nuvem Flutuantes no Céu (Nuvem / Remoto)
+                // Nuvem 1: plataforma de acesso
+                { x: 480, y: 340, w: 140, h: 28, type: "cloud_platform" },
+                // Nuvem 2: plataforma ampla onde fica o bloco de Armazenamento Nuvem
+                { x: 660, y: 280, w: 200, h: 28, type: "cloud_platform" },
+                // Bloco 'armazenamento_nuvem': elevado a y: 150 (espaço livre de 90px para o salto do Mario!)
+                { x: 740, y: 150, w: T, h: T, type: "question", itemId: "armazenamento_nuvem" },
+
+                // Nuvem 3: plataforma de transição
+                { x: 1200, y: 340, w: 140, h: 28, type: "cloud_platform" },
+                // Nuvem 4: plataforma ampla do Wi-Fi
+                { x: 1380, y: 280, w: 200, h: 28, type: "cloud_platform" },
+                // Bloco 'wifi_token': elevado a y: 150 (espaço livre de 90px para o salto do Mario!)
+                { x: 1460, y: 150, w: T, h: T, type: "question", itemId: "wifi_token" },
+
+                // Nuvem 5: Moedas nas alturas
+                { x: 1960, y: 320, w: 180, h: 28, type: "cloud_platform" },
+                { x: 2030, y: 190, w: T, h: T, type: "question", hasCoin: true },
+
+                // Escada final
+                { x: 2600, y: 420, w: 40, h: 40, type: "brick" },
+                { x: 2640, y: 380, w: 40, h: 80, type: "brick" },
+                { x: 2680, y: 340, w: 40, h: 120, type: "brick" },
+                { x: 2720, y: 300, w: 40, h: 160, type: "brick" }
+            ],
+
+            coins: [
+                { x: 180, y: 410 }, { x: 500, y: 290 }, { x: 540, y: 290 },
+                { x: 680, y: 230 }, { x: 820, y: 230 },
+                { x: 1220, y: 290 }, { x: 1400, y: 230 }, { x: 1540, y: 230 },
+                { x: 2420, y: 410 }, { x: 2460, y: 410 }, { x: 2500, y: 410 }
+            ],
+
+            enemies: [
+                { x: 550, y: 420, vx: -1.4 },
+                { x: 1020, y: 420, vx: 1.4 },
+                { x: 1740, y: 420, vx: -1.4 },
+                { x: 2480, y: 420, vx: -1.5 }
+            ],
+
+            scenery: [
+                { x: 80, y: 50, scale: 1 },
+                { x: 420, y: 90, scale: 1.3 },
+                { x: 880, y: 60, scale: 1.1 },
+                { x: 1350, y: 80, scale: 1.4 },
+                { x: 1820, y: 50, scale: 1.2 },
+                { x: 2350, y: 70, scale: 1 }
+            ]
+        };
+    },
+
+    // Mundo 3: O Castelo do Sistema Operacional (EF05CO07)
+    getWorld3() {
+        const T = this.tileSize;
+        return {
+            worldId: "world3",
+            levelNumber: "3-1",
+            name: "O Castelo do Sistema Operacional",
+            theme: "world3",
+            bgColor: "#091a13", // Verde escuro circuito impresso
+            width: 3400,
+            height: 540,
+            spawn: { x: 80, y: 380 },
+            flagX: 3100,
+
+            blocks: [
+                // Placa-Mãe Gigante
+                { x: 0, y: 460, w: 900, h: 80, type: "ground" },
+                { x: 980, y: 460, w: 750, h: 80, type: "ground" },
+                { x: 1820, y: 460, w: 750, h: 80, type: "ground" },
+                { x: 2660, y: 460, w: 800, h: 80, type: "ground" },
+
+                // Barramentos / Canos
+                { x: 420, y: 360, w: 60, h: 100, type: "pipe" },
+                { x: 1220, y: 340, w: 60, h: 120, type: "pipe" },
+                { x: 2060, y: 340, w: 60, h: 120, type: "pipe" },
+
+                // Bloco 1: O Maestro do Computador (No chão)
+                { x: 240, y: 320, w: T, h: T, type: "question", itemId: "so_maestro" },
+                { x: 280, y: 320, w: T, h: T, type: "brick" },
+                { x: 320, y: 320, w: T, h: T, type: "question", hasCoin: true },
+
+                // Plataforma elevada 1: Hardware Driver
+                // Plataforma de tijolos em y: 340, largura 220px
+                { x: 620, y: 340, w: 220, h: T, type: "brick" },
+                // Bloco 'gerenciador_hardware': em y: 210 (espaço livre de 90px para o salto do Mario!)
+                { x: 710, y: 210, w: T, h: T, type: "question", itemId: "gerenciador_hardware" },
+
+                // Plataforma elevada 2: Interface Gráfica
+                // Plataforma de tijolos em y: 340, largura 220px
+                { x: 1420, y: 340, w: 220, h: T, type: "brick" },
+                // Bloco 'interface_grafica': em y: 210 (espaço livre de 90px para o salto do Mario!)
+                { x: 1510, y: 210, w: T, h: T, type: "question", itemId: "interface_grafica" },
+
+                // Plataforma elevada 3: Moedas
+                { x: 2240, y: 340, w: 220, h: T, type: "brick" },
+                { x: 2330, y: 210, w: T, h: T, type: "question", hasCoin: true },
+
+                // Escadaria do Chefe Final
+                { x: 2800, y: 420, w: 40, h: 40, type: "brick" },
+                { x: 2840, y: 380, w: 40, h: 80, type: "brick" },
+                { x: 2880, y: 340, w: 40, h: 120, type: "brick" },
+                { x: 2920, y: 300, w: 40, h: 160, type: "brick" }
+            ],
+
+            coins: [
+                { x: 160, y: 410 }, { x: 640, y: 290 }, { x: 800, y: 290 },
+                { x: 1040, y: 410 }, { x: 1080, y: 410 },
+                { x: 1440, y: 290 }, { x: 1600, y: 290 },
+                { x: 2260, y: 290 }, { x: 2420, y: 290 }
+            ],
+
+            enemies: [
+                { x: 520, y: 420, vx: -1.6 },
+                { x: 1100, y: 420, vx: 1.6 },
+                { x: 1560, y: 420, vx: -1.6 },
+                { x: 1940, y: 420, vx: 1.6 },
+                { x: 2440, y: 420, vx: -1.8 },
+                { x: 2740, y: 420, vx: -2.0 } // Bug rápido perto da escada
+            ],
+
+            scenery: [
+                { x: 120, y: 60, scale: 1 },
+                { x: 540, y: 80, scale: 1.2 },
+                { x: 1020, y: 50, scale: 1.1 },
+                { x: 1600, y: 70, scale: 1.3 },
+                { x: 2150, y: 60, scale: 1 },
+                { x: 2700, y: 80, scale: 1.2 }
+            ]
+        };
+    }
+};
+
+
+/* === engine.js === */
+/**
+ * Super Bit Bros - Motor de Jogo e Física de Plataforma
+ * Colisões AABB precisas, câmera contínua com rolagem lateral e gerenciamento de entidades.
+ */
+
+class GameEngine {
+    constructor(canvas, pedagogicalCtrl) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
+        this.pedagogical = pedagogicalCtrl;
+
+        // Dimensões lógicas do Canvas
+        this.viewWidth = canvas.width;
+        this.viewHeight = canvas.height;
+
+        // Estado do Jogo
+        this.score = 0;
+        this.coins = 0;
+        this.lives = 3;
+        this.currentLevelIndex = 1;
+        this.isPaused = false;
+        this.animTimer = 0;
+
+        // Câmera
+        this.cameraX = 0;
+
+        // Entidades
+        this.player = null;
+        this.level = null;
+        this.activeCoins = [];
+        this.activeEnemies = [];
+        this.floatingTexts = [];
+        this.bouncingBlocks = [];
+
+        // Flag de finalização de fase
+        this.levelCompleted = false;
+        this.flagProgress = 0;
+
+        this.initPlayer();
+        this.loadLevel(this.currentLevelIndex);
+    }
+
+    initPlayer() {
+        this.player = {
+            x: 80,
+            y: 380,
+            w: 32,
+            h: 44,
+            vx: 0,
+            vy: 0,
+            speed: 0.45,
+            maxSpeed: 4.8,
+            friction: 0.84,
+            gravity: 0.6,
+            jumpStrength: -13.5,
+            onGround: false,
+            facingRight: true,
+            isJumping: false,
+            isMoving: false,
+            animTimer: 0,
+            invulnerableTimer: 0,
+            isDead: false
+        };
+    }
+
+    loadLevel(levelIndex) {
+        this.currentLevelIndex = levelIndex;
+        this.level = LevelManager.getLevel(levelIndex);
+        this.pedagogical.setWorld(this.level.worldId);
+
+        // Clona blocos para preservar estado da fase
+        this.blocks = JSON.parse(JSON.stringify(this.level.blocks));
+        this.activeCoins = JSON.parse(JSON.stringify(this.level.coins));
+        this.activeEnemies = this.level.enemies.map(e => ({
+            x: e.x,
+            y: e.y,
+            w: 34,
+            h: 30,
+            vx: e.vx,
+            isSquashed: false,
+            squashTimer: 0,
+            isDead: false
+        }));
+
+        // Reposiciona o jogador
+        this.player.x = this.level.spawn.x;
+        this.player.y = this.level.spawn.y;
+        this.player.vx = 0;
+        this.player.vy = 0;
+        this.cameraX = 0;
+        this.levelCompleted = false;
+        this.flagProgress = 0;
+
+        this.updateHUD();
+        this.pedagogical.showToast(`🚩 ${this.level.name}!`, 3000);
+    }
+
+    addScore(pts) {
+        this.score += pts;
+        this.updateHUD();
+    }
+
+    addCoin() {
+        this.coins++;
+        this.addScore(100);
+        sounds.playCoin();
+        if (this.coins >= 100) {
+            this.coins = 0;
+            this.lives++;
+            sounds.playPowerUp();
+            this.pedagogical.showToast("⭐ 1-UP! Vida Extra!", 2000);
+        }
+        this.updateHUD();
+    }
+
+    updateHUD() {
+        document.getElementById("hud-score").textContent = String(this.score).padStart(6, "0");
+        document.getElementById("hud-coins").textContent = `x${String(this.coins).padStart(2, "0")}`;
+        document.getElementById("hud-world").textContent = this.level ? this.level.levelNumber : "1-1";
+        document.getElementById("hud-lives").textContent = `❤️ x${this.lives}`;
+    }
+
+    pause() {
+        this.isPaused = true;
+    }
+
+    resume() {
+        this.isPaused = false;
+    }
+
+    // Loop de Atualização de Física
+    update(keys) {
+        if (this.isPaused) return;
+
+        this.animTimer++;
+        const p = this.player;
+
+        if (p.invulnerableTimer > 0) {
+            p.invulnerableTimer--;
+        }
+
+        // Se estiver em animação de término de fase descendo a bandeira
+        if (this.levelCompleted) {
+            if (this.flagProgress < 1) {
+                this.flagProgress += 0.025;
+            }
+            if (p.y < 416) {
+                p.y += 3;
+            } else {
+                p.vx = 2.4;
+                p.x += p.vx;
+                p.facingRight = true;
+                p.isMoving = true;
+                p.animTimer++;
+                // Quando o jogador entra na porta do castelo
+                if (p.x >= this.level.flagX + 180) {
+                    p.vx = 0;
+                    this.pause();
+                    setTimeout(() => {
+                        this.showVictoryModal();
+                    }, 400);
+                }
+            }
+            return;
+        }
+
+        // Controles Horizontais
+        if (keys.left) {
+            p.vx -= p.speed;
+            p.facingRight = false;
+            p.isMoving = true;
+        } else if (keys.right) {
+            p.vx += p.speed;
+            p.facingRight = true;
+            p.isMoving = true;
+        } else {
+            p.vx *= p.friction;
+            if (Math.abs(p.vx) < 0.1) p.vx = 0;
+            p.isMoving = false;
+        }
+
+        // Limita velocidade máxima horizontal
+        p.vx = Math.max(Math.min(p.vx, p.maxSpeed), -p.maxSpeed);
+
+        // Pulo
+        if (keys.jump && p.onGround) {
+            p.vy = p.jumpStrength;
+            p.onGround = false;
+            p.isJumping = true;
+            sounds.playJump();
+        }
+
+        // Aplica Gravidade
+        p.vy += p.gravity;
+        if (p.vy > 12) p.vy = 12; // Velocidade terminal de queda
+
+        p.isJumping = !p.onGround;
+        p.animTimer = p.isMoving ? p.animTimer + 1 : 0;
+
+        // Movimento Horizontal e Colisões
+        p.x += p.vx;
+        this.checkHorizontalCollisions(p);
+
+        // Movimento Vertical e Colisões
+        p.onGround = false;
+        p.y += p.vy;
+        this.checkVerticalCollisions(p);
+
+        // Interação manual com blocos
+        if (keys.action) {
+            this.checkActionInteraction();
+        }
+
+        // Atualização e física dos inimigos
+        this.updateEnemies();
+
+        // Checagem de coleta de moedas
+        this.checkCoinCollections();
+
+        // Checagem de término de fase (chegada ao mastro)
+        if (p.x >= this.level.flagX && !this.levelCompleted) {
+            this.reachFlagpole();
+        }
+
+        // Queda no abismo (perde vida)
+        if (p.y > this.viewHeight + 60) {
+            this.handlePlayerDeath();
+        }
+
+        // Atualiza blocos que saltam ao bater por baixo
+        this.updateBouncingBlocks();
+
+        // Câmera acompanha o jogador
+        const targetCamX = p.x - this.viewWidth * 0.35;
+        this.cameraX += (targetCamX - this.cameraX) * 0.1;
+        this.cameraX = Math.max(0, Math.min(this.cameraX, this.level.width - this.viewWidth));
+    }
+
+    // Colisões Horizontais com Blocos e Canos
+    checkHorizontalCollisions(p) {
+        for (const b of this.blocks) {
+            if (this.isColliding(p, b)) {
+                if (p.vx > 0) {
+                    p.x = b.x - p.w;
+                    p.vx = 0;
+                } else if (p.vx < 0) {
+                    p.x = b.x + b.w;
+                    p.vx = 0;
+                }
+            }
+        }
+        // Limites da fase
+        if (p.x < 0) {
+            p.x = 0;
+            p.vx = 0;
+        }
+    }
+
+    // Colisões Verticais (Chão, Teto e Cabeçada em Blocos)
+    checkVerticalCollisions(p) {
+        for (const b of this.blocks) {
+            if (this.isColliding(p, b)) {
+                // Aterrissando sobre a plataforma/bloco
+                if (p.vy >= 0 && (p.y + p.h - p.vy) <= b.y + 12) {
+                    p.y = b.y - p.h;
+                    p.vy = 0;
+                    p.onGround = true;
+                }
+                // Cabeçada por baixo do bloco (pulando para cima)
+                else if (p.vy < 0) {
+                    p.y = b.y + b.h;
+                    p.vy = 0;
+                    this.hitBlockFromBelow(b);
+                }
+            }
+        }
+    }
+
+    // Interação manual com tecla E / Enter ou botão Interagir
+    checkActionInteraction() {
+        const p = this.player;
+        const reachBox = {
+            x: p.x - 24,
+            y: p.y - 24,
+            w: p.w + 48,
+            h: p.h + 48
+        };
+        for (const b of this.blocks) {
+            if (b.type === "question" && !b.hit && this.isColliding(reachBox, b)) {
+                this.hitBlockFromBelow(b);
+                break;
+            }
+        }
+    }
+
+    // Ação ao bater a cabeça no bloco por baixo
+    hitBlockFromBelow(b) {
+        if (b.type === "question" && !b.hit) {
+            b.hit = true;
+            this.triggerBlockBounce(b);
+
+            if (b.itemId) {
+                // Bloco pedagógico da BNCC!
+                const worldItems = PedagogicalData[this.level.worldId].items;
+                const itemData = worldItems.find(it => it.id === b.itemId);
+                if (itemData) {
+                    sounds.playPowerUp();
+                    this.pause();
+                    this.pedagogical.openItemModal(itemData, () => {
+                        this.addScore(1000);
+                    });
+                }
+            } else if (b.hasCoin) {
+                // Bloco que solta moeda
+                this.addCoin();
+            }
+        } else if (b.type === "brick") {
+            this.triggerBlockBounce(b);
+            sounds.playBump();
+        }
+    }
+
+    triggerBlockBounce(b) {
+        b.bounceOffset = -8;
+        this.bouncingBlocks.push(b);
+    }
+
+    updateBouncingBlocks() {
+        for (let i = this.bouncingBlocks.length - 1; i >= 0; i--) {
+            const b = this.bouncingBlocks[i];
+            if (b.bounceOffset < 0) {
+                b.bounceOffset += 1.5;
+                if (b.bounceOffset >= 0) {
+                    b.bounceOffset = 0;
+                    this.bouncingBlocks.splice(i, 1);
+                }
+            }
+        }
+    }
+
+    // Atualiza inimigos e suas colisões
+    updateEnemies() {
+        const p = this.player;
+
+        this.activeEnemies.forEach(e => {
+            if (e.isDead) return;
+
+            if (e.isSquashed) {
+                e.squashTimer++;
+                if (e.squashTimer > 25) e.isDead = true;
+                return;
+            }
+
+            // Movimentação
+            e.x += e.vx;
+
+            // Inverte direção ao bater em blocos ou canos
+            for (const b of this.blocks) {
+                if (this.isColliding(e, b)) {
+                    e.vx = -e.vx;
+                    e.x += e.vx * 2;
+                    break;
+                }
+            }
+
+            // Colisão com o Jogador
+            if (!p.isDead && p.invulnerableTimer === 0 && this.isColliding(p, e)) {
+                // Pulo na cabeça do Bug!
+                if (p.vy > 0 && p.y + p.h < e.y + e.h * 0.75) {
+                    e.isSquashed = true;
+                    p.vy = -8.5; // Impulso do salto
+                    sounds.playStomp();
+                    this.addScore(200);
+                    this.pedagogical.showToast("👾 Bug Eliminado! +200", 1500);
+                } else {
+                    // Jogador atingido de lado
+                    this.handlePlayerDamage();
+                }
+            }
+        });
+    }
+
+    // Coleta de Moedas
+    checkCoinCollections() {
+        const p = this.player;
+        for (let i = this.activeCoins.length - 1; i >= 0; i--) {
+            const c = this.activeCoins[i];
+            const coinBox = { x: c.x, y: c.y, w: 24, h: 24 };
+            if (this.isColliding(p, coinBox)) {
+                this.activeCoins.splice(i, 1);
+                this.addCoin();
+            }
+        }
+    }
+
+    // Chegada ao Mastro e Desafio Final da Fase
+    reachFlagpole() {
+        this.levelCompleted = true;
+        this.player.vx = 0;
+        this.player.vy = 0;
+
+        // Desafio do Portão / Castelo da BNCC
+        const gate = PedagogicalData[this.level.worldId].gateChallenge;
+        sounds.playPowerUp();
+        this.pause();
+
+        this.pedagogical.openItemModal(gate, () => {
+            sounds.playVictory();
+            this.resume();
+        });
+    }
+
+    showVictoryModal() {
+        const vModal = document.getElementById("victory-modal");
+        const vTitle = document.getElementById("victory-title");
+        const vMsg = document.getElementById("victory-message");
+        const vStats = document.getElementById("victory-stats");
+        const nextBtn = document.getElementById("btn-next-level");
+
+        vTitle.textContent = `${this.level.name} Concluído!`;
+        vMsg.textContent = `Parabéns! Você aplicou com sucesso a habilidade ${PedagogicalData[this.level.worldId].skill}!`;
+        vStats.innerHTML = `
+            <p><strong>Pontuação Total:</strong> ${this.score} pontos</p>
+            <p><strong>Bits Coletados:</strong> ${this.coins}</p>
+            <p><strong>Vidas Restantes:</strong> ${this.lives}</p>
+        `;
+
+        if (this.currentLevelIndex >= 3) {
+            nextBtn.textContent = "JOGAR NOVAMENTE 🏆";
+        } else {
+            nextBtn.textContent = `IR PARA O MUNDO ${this.currentLevelIndex + 1} ➔`;
+        }
+
+        vModal.classList.remove("hidden");
+    }
+
+    handlePlayerDamage() {
+        this.lives--;
+        this.updateHUD();
+        sounds.playQuizWrong();
+
+        if (this.lives <= 0) {
+            this.handleGameOver();
+        } else {
+            this.player.invulnerableTimer = 90; // Piscar por 1.5s
+            this.player.vy = -6;
+            this.player.vx = this.player.facingRight ? -4 : 4;
+            this.pedagogical.showToast("⚠️ Cuidado com os Bugs! -1 Vida", 2000);
+        }
+    }
+
+    handlePlayerDeath() {
+        this.lives--;
+        this.updateHUD();
+        sounds.playQuizWrong();
+
+        if (this.lives <= 0) {
+            this.handleGameOver();
+        } else {
+            // Respawn no início da fase
+            this.player.x = this.level.spawn.x;
+            this.player.y = this.level.spawn.y;
+            this.player.vx = 0;
+            this.player.vy = 0;
+            this.player.invulnerableTimer = 60;
+            this.pedagogical.showToast("🔄 Reiniciando na base!", 2000);
+        }
+    }
+
+    handleGameOver() {
+        this.pause();
+        sounds.playQuizWrong();
+        alert("GAME OVER! Você perdeu todas as vidas. Vamos recarregar a fase para aprender ainda mais!");
+        this.lives = 3;
+        this.score = 0;
+        this.coins = 0;
+        this.loadLevel(this.currentLevelIndex);
+        this.resume();
+    }
+
+    // Teste AABB simples
+    isColliding(r1, r2) {
+        return (
+            r1.x < r2.x + r2.w &&
+            r1.x + r1.w > r2.x &&
+            r1.y < r2.y + r2.h &&
+            r1.y + r1.h > r2.y
+        );
+    }
+
+    // Renderização no Canvas
+    render() {
+        const ctx = this.ctx;
+        ctx.save();
+
+        // Limpa a tela com o fundo temático
+        ctx.fillStyle = this.level.bgColor || "#5c94fc";
+        ctx.fillRect(0, 0, this.viewWidth, this.viewHeight);
+
+        // Nuvens e cenário de fundo com parallax suave
+        this.level.scenery.forEach(s => {
+            const scX = s.x - this.cameraX * 0.4;
+            Sprites.drawCloud(ctx, scX, s.y, s.scale);
+        });
+
+        // Aplica translação da Câmera
+        ctx.translate(-Math.floor(this.cameraX), 0);
+
+        // Renderiza Blocos e Plataformas
+        this.blocks.forEach(b => {
+            const drawY = b.y + (b.bounceOffset || 0);
+
+            if (b.type === "ground") {
+                for (let gx = b.x; gx < b.x + b.w; gx += LevelManager.tileSize) {
+                    Sprites.drawGroundTile(ctx, gx, drawY, LevelManager.tileSize, this.level.theme);
+                }
+            } else if (b.type === "pipe") {
+                Sprites.drawPipe(ctx, b.x, drawY, b.w, b.h);
+            } else if (b.type === "brick") {
+                for (let bx = b.x; bx < b.x + b.w; bx += LevelManager.tileSize) {
+                    Sprites.drawBrickBlock(ctx, bx, drawY, LevelManager.tileSize);
+                }
+            } else if (b.type === "question") {
+                Sprites.drawQuestionBlock(ctx, b.x, drawY, b.w, b.hit, this.animTimer);
+            } else if (b.type === "cloud_platform") {
+                Sprites.drawCloudPlatform(ctx, b.x, drawY, b.w, b.h);
+            }
+        });
+
+        // Renderiza Moedas Binárias
+        this.activeCoins.forEach(c => {
+            Sprites.drawCoin(ctx, c.x, c.y, 24, this.animTimer);
+        });
+
+        // Renderiza Castelo de Final de Fase
+        Sprites.drawCastle(ctx, this.level.flagX + 110, 280, 180, 180);
+
+        // Renderiza Mastro de Vitória
+        Sprites.drawFlagpole(ctx, this.level.flagX, 160, 300, this.flagProgress);
+
+        // Renderiza Inimigos
+        this.activeEnemies.forEach(e => {
+            if (!e.isDead) {
+                Sprites.drawEnemy(ctx, e.x, e.y, e.w, e.h, e.isSquashed, this.animTimer);
+            }
+        });
+
+        // Se estiver no Mundo 3, renderiza o "Bug do Caos" guardando o castelo antes da vitória
+        if (this.level.worldId === "world3" && !this.levelCompleted) {
+            Sprites.drawBoss(ctx, this.level.flagX - 100, 400, 60, 60, this.animTimer);
+        }
+
+        // Renderiza o Jogador (com efeito de piscar se invulnerável)
+        const p = this.player;
+        // Oculta o jogador caso ele já tenha entrado completamente na porta do castelo
+        if (!(this.levelCompleted && p.x >= this.level.flagX + 180)) {
+            if (p.invulnerableTimer === 0 || Math.floor(p.invulnerableTimer / 6) % 2 === 0) {
+                Sprites.drawPlayer(ctx, p.x, p.y, p.w, p.h, p, p.facingRight);
+            }
+        }
+
+        ctx.restore();
+    }
+}
+
+
+/* === main.js === */
+/**
+ * Super Bit Bros - Inicializador Principal e Controle de Entrada
+ * Gerenciamento de teclado, trackpad/mouse, botões de ação e loop de animação.
+ */
+
+window.addEventListener("DOMContentLoaded", () => {
+    const canvas = document.getElementById("gameCanvas");
+    const pedagogical = new PedagogicalController();
+    const engine = new GameEngine(canvas, pedagogical);
+    window.gameEngine = engine;
+
+    // Estado das entradas (Teclado e Controles Virtuais)
+    const keys = {
+        left: false,
+        right: false,
+        jump: false,
+        action: false
+    };
+
+    let audioInitialized = false;
+
+    // Inicia o áudio na primeira interação do usuário (exigência do Chrome)
+    const startAudioOnGesture = () => {
+        if (!audioInitialized) {
+            sounds.init();
+            sounds.startMusic();
+            audioInitialized = true;
+        }
+    };
+
+    window.addEventListener("keydown", startAudioOnGesture, { once: true });
+    window.addEventListener("click", startAudioOnGesture, { once: true });
+
+    // === MAPEAMENTO DE TECLADO ===
+    window.addEventListener("keydown", (e) => {
+        if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+            e.preventDefault(); // Evita rolagem da página no navegador
+        }
+
+        switch (e.code) {
+            case "ArrowLeft":
+            case "KeyA":
+                keys.left = true;
+                break;
+            case "ArrowRight":
+            case "KeyD":
+                keys.right = true;
+                break;
+            case "ArrowUp":
+            case "KeyW":
+            case "Space":
+                keys.jump = true;
+                break;
+            case "KeyE":
+            case "Enter":
+                keys.action = true;
+                break;
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        switch (e.code) {
+            case "ArrowLeft":
+            case "KeyA":
+                keys.left = false;
+                break;
+            case "ArrowRight":
+            case "KeyD":
+                keys.right = false;
+                break;
+            case "ArrowUp":
+            case "KeyW":
+            case "Space":
+                keys.jump = false;
+                break;
+            case "KeyE":
+            case "Enter":
+                keys.action = false;
+                break;
+        }
+    });
+
+    // === MAPEAMENTO DE CONTROLES PARA TRACKPAD & MOUSE / TOQUE ===
+    const bindVirtualButton = (btnId, keyName) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+
+        const press = (e) => {
+            e.preventDefault();
+            startAudioOnGesture();
+            keys[keyName] = true;
+            btn.classList.add("active");
+        };
+
+        const release = (e) => {
+            e.preventDefault();
+            keys[keyName] = false;
+            btn.classList.remove("active");
+        };
+
+        btn.addEventListener("mousedown", press);
+        btn.addEventListener("mouseup", release);
+        btn.addEventListener("mouseleave", release);
+
+        btn.addEventListener("touchstart", press, { passive: false });
+        btn.addEventListener("touchend", release, { passive: false });
+        btn.addEventListener("touchcancel", release, { passive: false });
+    };
+
+    bindVirtualButton("vbtn-left", "left");
+    bindVirtualButton("vbtn-right", "right");
+    bindVirtualButton("vbtn-jump", "jump");
+    bindVirtualButton("vbtn-action", "action"); // Botão de ação/interação direta com blocos e objetos
+
+    // === BOTÕES DO CABEÇALHO ARCADE ===
+    // Botão Som
+    const btnSound = document.getElementById("btn-sound");
+    btnSound.addEventListener("click", () => {
+        startAudioOnGesture();
+        const muted = sounds.toggleMute();
+        btnSound.textContent = muted ? "🔇 SOM" : "🔊 SOM";
+        btnSound.style.borderColor = muted ? "#e53935" : "#5c6bc0";
+    });
+
+    // Botão Ajuda / BNCC
+    const btnHelp = document.getElementById("btn-help");
+    const helpModal = document.getElementById("help-modal");
+    const btnCloseHelp = document.getElementById("btn-close-help");
+
+    btnHelp.addEventListener("click", () => {
+        engine.pause();
+        helpModal.classList.remove("hidden");
+    });
+
+    btnCloseHelp.addEventListener("click", () => {
+        helpModal.classList.add("hidden");
+        engine.resume();
+    });
+
+    // Botão Reiniciar Fase
+    const btnRestart = document.getElementById("btn-restart");
+    btnRestart.addEventListener("click", () => {
+        if (confirm("Deseja reiniciar a fase atual?")) {
+            engine.loadLevel(engine.currentLevelIndex);
+        }
+    });
+
+    // Botão Próxima Fase no Modal de Vitória
+    const nextLevelBtn = document.getElementById("btn-next-level");
+    const victoryModal = document.getElementById("victory-modal");
+
+    nextLevelBtn.addEventListener("click", () => {
+        victoryModal.classList.add("hidden");
+        let nextLvl = engine.currentLevelIndex + 1;
+        if (nextLvl > 3) {
+            nextLvl = 1; // Recomeça se terminou o Mundo 3
+            engine.score = 0;
+            engine.coins = 0;
+            engine.lives = 3;
+        }
+        engine.loadLevel(nextLvl);
+        engine.resume();
+        sounds.startMusic();
+    });
+
+    // === LOOP PRINCIPAL DE EXECUÇÃO (60 FPS) ===
+    function gameLoop() {
+        engine.update(keys);
+        engine.render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    requestAnimationFrame(gameLoop);
+});
+
+</script>
+</body>
+</html>
